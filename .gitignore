@@ -22,5 +22,14 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 /MOEAFramework/nbproject/private/
-/MOEAFramework/manifest.mf
 /MOEAFramework/nbbuild
+/MOEAFramework/bin/
+/MOEAFramework/build/
+/MOEAFramework/cov-int/
+/MOEAFramework/dist/
+/MOEAFramework/pisa/
+/MOEAFramework/test-results/
+/MOEAFramework/javadoc/
+/MOEAFramework/maven/
+/MOEAFramework/*.exe
+/MOEAFramework/*~
