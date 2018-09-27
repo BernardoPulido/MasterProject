@@ -25,6 +25,18 @@ import org.moeaframework.Executor;
  * and statistically compare multiple algorithms.
  */
 public class Example2 {
+    /**
+     * 
+     * Ejemplos de Cruza
+     *   Partial-mapped crossover (PMX)
+     *   Order crossover(OX)
+     *   Position-based crossover (PX)
+     * 
+     * Ejemplos de muta
+     *   Swap mutation
+     *   Insertion mutation
+     *   Immigration operator.
+     */
 
 	public static void main(String[] args) throws IOException {
 		String problem = "UF1";
