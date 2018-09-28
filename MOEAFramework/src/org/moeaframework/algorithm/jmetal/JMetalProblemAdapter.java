@@ -70,6 +70,7 @@ public class JMetalProblemAdapter extends jmetal.core.Problem {
 		try {
 			for (int i = 0; i < numberOfVariables_; i++) {
 				Variable variable = solution.getVariable(i);
+                                System.out.println("Solution: "+variable.getClass());
 	
 				if (variable instanceof RealVariable) {
 					RealVariable real = (RealVariable)variable;

@@ -36,11 +36,24 @@ public class Example2 {
      *   Swap mutation
      *   Insertion mutation
      *   Immigration operator.
+     * 
+     * Notas
+     * 
+     * org.moeaframework.algorithm.StandardAlgorithm.java
+     * En la línea 259 agregar el algoritmo a los casos “else if”, en la parte inferior de ese mismo archivo agregar el método.
+     * 
+     * org.moeaframework.core.Settings
+     * En la línea 557 agregar el nombre del algoritmo a la lista de nombres,
+     * En la línea 570 se agrega el nombre de nuestro problema.
+     * 
+     * org.moeaframework.core.NondominatedPopulation.java
+     * En la línea 234 se encuentra la distancia Euclidiana de dos soluciones en el espacio de objetivos.
+
      */
 
 	public static void main(String[] args) throws IOException {
 		String problem = "UF1";
-		String[] algorithms = { "NSGAII", "GDE3", "eMOEA" };
+		String[] algorithms = { "NSGAII", "NSGAII-JMetal", "SMPSO", "SMPSO-JMetal", "MOCell-JMetal" };
 
 		//setup the experiment
 		Executor executor = new Executor()
