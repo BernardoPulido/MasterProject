@@ -8,6 +8,13 @@
  *
  * @author Bernardo Pulido
  */
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StreamTokenizer;
+import java.util.ArrayList;
+import org.moeaframework.Analyzer;
 import org.moeaframework.Executor;
 import org.moeaframework.core.NondominatedPopulation;
 import org.moeaframework.core.Solution;
@@ -24,16 +31,52 @@ public class ExampleTest {
 	/**
 	 * Implementation of the VRPTest function.
 	 */
+  
+        public static Integer dimension;
+        protected static double [][] distanceMatrix ;
+        protected static double [][] costMatrix;
+        public static String distanceFile;
+        public static String costFile;
+        protected static int [][] adjacenciasMatrix;
+        protected static int init_node = 0;
+        protected static int destine_node = 24;
+        
 	public static class VRPTest extends AbstractProblem {
 
-		/**
-		 * Constructs a new instance of the DTLZ2 function, defining it
-		 * to include 11 decision variables and 2 objectives.
-		 */
-		public VRPTest() {
-			super(1, 3);
+		public VRPTest() throws IOException {
+			super(1, 2); 
+                        distanceFile="/vrp.txt";
+                        readProblem(distanceFile);
+                        llenarConCeros();
+                
+                 //       imprimirMatrices();
 		}
-
+                private void llenarConCeros() {
+                  for(int i=0; i<dimension;i++){
+                    for(int j=0; j<dimension;j++){
+                        if(adjacenciasMatrix[i][j]!=1){
+                          adjacenciasMatrix[i][j]=0;
+                        }
+                    }
+                  }
+                }
+                
+                  public void imprimirMatrices(){
+                    for(int i=0; i<distanceMatrix.length;i++){
+                      for(int j=0; j<distanceMatrix.length;j++){
+                          System.out.print(""+distanceMatrix[i][j]+" ");
+                      }
+                      System.out.println();
+                    }
+                  }
+                public void imprimirPermutation(int[] permutacion){
+                       for(int i=0; i<permutacion.length;i++){
+                            System.out.print(""+permutacion[i]+" ");
+                        }
+                        System.out.println("");
+                        
+                }
+               
 		/**
 		 * Constructs a new solution and defines the bounds of the decision
 		 * variables.
@@ -42,12 +85,17 @@ public class ExampleTest {
 		public Solution newSolution() {
 			Solution solution = new Solution(getNumberOfVariables(), 
 					getNumberOfObjectives());
-
+                        
+                        
 			for (int i = 0; i < getNumberOfVariables(); i++) {
-				solution.setVariable(i, new Permutation(10));
+                            Permutation permutacion = new Permutation(dimension);
+                            permutacion.randomize();
+			    solution.setVariable(i, permutacion);
 			}
+                        //imprimirPermutation(EncodingUtils.getPermutation(solution.getVariable(0)));
 
 			return solution;
+                        
 		}
 		
 		/**
@@ -57,52 +105,197 @@ public class ExampleTest {
 		 */
 		@Override
 		public void evaluate(Solution solution) {
-			int[] x = EncodingUtils.getPermutation(solution.getVariable(0));
-			double[] f = new double[numberOfObjectives];
+                    
+                        double fitness1   ;
+                        double fitness2   ;
 
-			int k = numberOfVariables - numberOfObjectives + 1;
+                        fitness1 = 0.0 ;
+                        fitness2 = 0.0 ;
 
-			double g = 0.0;
-			for (int i = numberOfVariables - k; i < numberOfVariables; i++) {
-				g += Math.pow(x[i] - 0.5, 2.0);
-			}
+                        ArrayList<Integer> nodes_visitados = new ArrayList<Integer>();
 
-			for (int i = 0; i < numberOfObjectives; i++) {
-				f[i] = 1.0 + g;
+                       // for(int i=0; i<dimension;i++){
+                          //System.out.print(EncodingUtils.getPermutation(solution.getVariable(0))[i]+" ");
+                          
+                        //}
+                        //System.out.println();
 
-				for (int j = 0; j < numberOfObjectives - i - 1; j++) {
-					f[i] *= Math.cos(0.5 * Math.PI * x[j]);
-				}
+                        int current_node = init_node;
 
-				if (i != 0) {
-					f[i] *= Math.sin(0.5 * Math.PI * x[numberOfObjectives - i - 1]);
-				}
-			}
+                        while(current_node!=destine_node){
 
-			solution.setObjectives(f);
+                          //System.out.println(current_node+" Current node");
+                          int max=-1;
+                          int pos_max=current_node;
+                          for(int i=0; i<dimension;i++){
+                            if(adjacenciasMatrix[current_node][i]==1){
+                                if((max < EncodingUtils.getPermutation(solution.getVariable(0))[i]) && (nodes_visitados.indexOf(i)==-1)){
+                                   max= EncodingUtils.getPermutation(solution.getVariable(0))[i];
+                                   pos_max = i;
+                                }
+                            }
+                          }
+                          if(pos_max!=current_node){
+                            fitness1 +=distanceMatrix[current_node][pos_max];
+                            fitness2 +=costMatrix[current_node][pos_max];
+                            nodes_visitados.add(current_node);
+                            current_node=pos_max;
+                          }else{
+                            //System.err.println("El grafo no es conexo");
+                            //System.exit(0);
+                            fitness1+=1000;
+                            fitness2+=1000;
+                            current_node=destine_node;
+                          }
+                        }
+
+                    double[] f = new double[numberOfObjectives];
+                    f[0]=fitness1;
+                    f[1]=fitness2;
+                        
+                    solution.setObjectives(f);
+
+                                       
 		}
-		
+                
+                
+		private void readProblem(String file) throws IOException {
+                    int [][] matrix = null;
+                    double [][] matrix_penalizacion = null;
+                    double [][] matrix_distancias = null;
+
+                    InputStream in = getClass().getResourceAsStream(file);
+                    InputStreamReader isr = new InputStreamReader(in);
+                    BufferedReader br = new BufferedReader(isr);
+
+                    StreamTokenizer token = new StreamTokenizer(br);
+                    try {
+                      boolean found ;
+                      found = false ;
+
+                      token.nextToken();
+                      while(!found) {
+                        if ((token.sval != null) && ((token.sval.compareTo("DIMENSION") == 0)))
+                          found = true ;
+                        else
+                          token.nextToken() ;
+                      }
+
+                      token.nextToken() ;
+                      token.nextToken() ;
+
+                      dimension =  (int)token.nval ;
+
+                      matrix = new int[dimension][dimension] ;
+                      matrix_penalizacion = new double[dimension][dimension] ;
+                      matrix_distancias = new double[dimension][dimension] ;
+
+                      //Find the string ARISTAS
+                      found = false ;
+                      token.nextToken();
+                      while(!found) {
+                        if ((token.sval != null) && ((token.sval.compareTo("ARISTAS") == 0)))
+                          found = true ;
+                        else
+                          token.nextToken() ;
+                      }
+                      token.nextToken() ;
+                      token.nextToken() ;
+
+                      int edges = (int)token.nval;
+
+                      // Find the string SECTION  
+                      found = false ;
+                      token.nextToken();
+                      while(!found) {
+                        if ((token.sval != null) &&
+                            ((token.sval.compareTo("SECTION") == 0)))
+                          found = true ;
+                        else
+                          token.nextToken() ;
+                      }
+
+
+                      for (int i = 0; i < edges; i++) {
+                        token.nextToken();
+                        int j = (int)token.nval;
+
+                        token.nextToken();
+                        int k = (int)token.nval;
+
+                        token.nextToken();
+                        int distancia = (int)token.nval;
+
+                        token.nextToken();
+                        int penalizacion = (int)token.nval;
+
+                        matrix[j-1][k-1] = 1;
+                        matrix[k-1][j-1] = 1;
+
+                        matrix_distancias[j-1][k-1]= distancia;
+                        matrix_distancias[k-1][j-1] = distancia;
+
+                        matrix_penalizacion[j-1][k-1]= penalizacion;
+                        matrix_penalizacion[k-1][j-1] = penalizacion;
+
+                      }
+                    } catch (Exception e) {
+                      e.printStackTrace();
+                    }
+                    adjacenciasMatrix = matrix;
+                    distanceMatrix=matrix_distancias;
+                    costMatrix=matrix_penalizacion;
+                  }
 	}
-        
+                
 	
 	public static void main(String[] args) {
 		
-		NondominatedPopulation result = new Executor()
+                NondominatedPopulation result = new Executor()
 				.withProblemClass(VRPTest.class)
 				.withAlgorithm("MOCell-JMetal")
 				.withMaxEvaluations(10000)
+                        
+                                .distributeOnAllCores()
 				.run();
 				
 		//display the results
-		System.out.format("Objective1  Objective2  Objective3%n");
+		System.out.format("Objective1  Objective2%n");
 		
 		for (Solution solution : result) {
-			System.out.format("%.4f      %.4f      %.4f%n",
+			System.out.format("%.4f      %.4f%n",
 					solution.getObjective(0),
-					solution.getObjective(1),
-                                        solution.getObjective(2));
+					solution.getObjective(1));
 		}
-	}
-	
+                
+                /**
+                 * Adaptación de Example2 a VRP
+                 *
+                 */
+                String[] algorithms = {"MOCell-JMetal", "NSGAII"};
+                
+                Executor executor = new Executor()
+                                .withProblemClass(VRPTest.class)
+                                .distributeOnAllCores()
+                                .withMaxEvaluations(10000);
+                
+                Analyzer analyzer = new Analyzer()
+				.withProblemClass(VRPTest.class)
+				.includeHypervolume()
+                                .includeAdditiveEpsilonIndicator()
+                                .includeInvertedGenerationalDistance()
+				.showStatisticalSignificance();
+
+		for (String algorithm : algorithms) {
+			analyzer.addAll(algorithm, 
+					executor.withAlgorithm(algorithm).runSeeds(30));
+		}
+
+		//print the results
+                System.out.println("");
+                System.out.println("Resultados Comparación estadistica de algoritmos");
+                System.out.println("");
+		analyzer.printAnalysis();
+        }
 }
 
